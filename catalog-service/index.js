@@ -48,5 +48,17 @@ app.delete('/products/:id', (req, res) => {
         res.json({ deletedID: req.params.id });
     });
 });
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    service: 'catalog-service',
+    timestamp: new Date().toISOString()
+  });
+});
 
-app.listen(3001, () => console.log('Catalog Service running on port 3001'));
+// Start server
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Catalog Service running on port ${PORT}`);
+});
