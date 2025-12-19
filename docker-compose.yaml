@@ -1,66 +1,88 @@
-version: '3.8'
-
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
   catalog-service:
-    build:
-      context: ./catalog-service
-      dockerfile: Dockerfile
+    build: ./services/catalog-service
     container_name: catalog-service
     ports:
       - "8001:3001"
     environment:
-      NODE_ENV: development
-      PORT: 3001
-    networks:
-      - ecommerce-network
-    restart: unless-stopped
+      - PORT=3001
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=catalog
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
 
   cart-service:
-    build:
-      context: ./cart-service
-      dockerfile: Dockerfile
+    build: ./services/cart-service
     container_name: cart-service
     ports:
       - "8002:3002"
     environment:
-      NODE_ENV: development
-      PORT: 3002
-      CATALOG_SERVICE_URL: http://catalog-service:3001
+      - PORT=3002
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=cart
     depends_on:
-      - catalog-service
-    networks:
-      - ecommerce-network
-    restart: unless-stopped
+      postgres:
+        condition: service_healthy
+    restart: always
 
   order-service:
-    build:
-      context: ./order-service
-      dockerfile: Dockerfile
+    build: ./services/order-service
     container_name: order-service
     ports:
       - "8003:3003"
     environment:
-      NODE_ENV: development
-      PORT: 3003
-    networks:
-      - ecommerce-network
-    restart: unless-stopped
+      - PORT=3003
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=orders
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
 
   payment-service:
-    build:
-      context: ./payment-service
-      dockerfile: Dockerfile
+    build: ./services/payment-service
     container_name: payment-service
     ports:
       - "8004:3004"
     environment:
-      NODE_ENV: development
-      PORT: 3004
-    networks:
-      - ecommerce-network
-    restart: unless-stopped
+      - PORT=3004
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=payments
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
 
-networks:
-  ecommerce-network:
-    driver: bridge
-
+volumes:
+  postgres_data:
