@@ -1,8 +1,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const db = require('./database');
+const cors = require('cors');
 
 const app = express();
+app.use(cors());
 app.use(bodyParser.json());
 
 // GET all products
@@ -48,6 +50,7 @@ app.delete('/products/:id', (req, res) => {
         res.json({ deletedID: req.params.id });
     });
 });
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({

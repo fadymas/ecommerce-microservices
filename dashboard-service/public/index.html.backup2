@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>E‑Commerce Admin Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --bg: #020617;
+        --bg-soft: #0b1120;
+        --bg-card: #020617;
+        --accent: #38bdf8;
+        --accent-soft: rgba(56, 189, 248, 0.12);
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --border: #1f2937;
+        --danger: #f97373;
+        --success: #4ade80;
+        --warning: #facc15;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+      }
+      aside {
+        width: 230px;
+        background: linear-gradient(to bottom, #020617, #020617dd);
+        border-right: 1px solid var(--border);
+        padding: 22px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 26px;
+      }
+      .logo { display: flex; align-items: center; gap: 10px; }
+      .logo-icon {
+        width: 32px; height: 32px; border-radius: 10px;
+        background: radial-gradient(circle at 20% 0, #38bdf8, #4ade80);
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 800; color: #020617;
+      }
+      .logo-text { font-weight: 700; font-size: 18px; }
+      .nav-title {
+        font-size: 11px; letter-spacing: 0.12em;
+        text-transform: uppercase; color: var(--muted);
+        margin-bottom: 8px;
+      }
+      .nav { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+      .nav li {
+        padding: 8px 10px;
+        border-radius: 10px;
+        font-size: 14px;
+        color: var(--muted);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .nav li.active {
+        background: var(--accent-soft);
+        color: var(--text);
+        border: 1px solid rgba(56, 189, 248, 0.4);
+      }
+      .nav-dot {
+        width: 6px; height: 6px; border-radius: 999px;
+        background: #4b5563;
+      }
+      .nav li.active .nav-dot { background: var(--accent); }
+      main {
+        flex: 1;
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      header { display: flex; justify-content: space-between; gap: 10px; }
+      header h1 { font-size: 22px; }
+      header p { font-size: 13px; color: var(--muted); }
+      .pill {
+        font-size: 12px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid var(--border);
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .pill-dot {
+        width: 7px; height: 7px; border-radius: 999px;
+        background: #22c55e; box-shadow: 0 0 10px #22c55e;
+      }
+      .tabs { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+      .tab {
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(15, 23, 42, 0.9);
+        color: var(--muted);
+        cursor: pointer;
+      }
+      .tab.active {
+        background: var(--accent-soft);
+        color: var(--text);
+        border-color: rgba(56, 189, 248, 0.5);
+      }
+      .card {
+        background: radial-gradient(circle at top left, #020617, #020617f0);
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        padding: 14px 16px;
+        margin-top: 10px;
+        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.8);
+      }
+      .card-title {
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
+      .card-sub { font-size: 12px; color: var(--muted); }
+      .row { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+      .col { flex: 1 1 260px; }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+      }
+      th, td {
+        padding: 7px 6px;
+        font-size: 13px;
+        text-align: left;
+      }
+      thead { background: #020617; }
+      th { color: var(--muted); border-bottom: 1px solid var(--border); }
+      tbody tr:nth-child(odd) { background: rgba(15, 23, 42, 0.55); }
+      tbody tr:nth-child(even) { background: rgba(15, 23, 42, 0.85); }
+      tbody tr:hover { background: rgba(15, 23, 42, 1); }
+      .btn {
+        font-size: 13px;
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+      }
+      .btn-primary {
+        background: linear-gradient(to right, #38bdf8, #4ade80);
+        color: #020617;
+        font-weight: 600;
+      }
+      .btn-outline {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .btn:active { transform: scale(0.97); }
+      .field { margin-bottom: 8px; }
+      .field label {
+        display: block;
+        font-size: 12px;
+        margin-bottom: 3px;
+        color: var(--muted);
+      }
+      .field input, .field select {
+        width: 100%;
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #020617;
+        color: var(--text);
+        font-size: 13px;
+      }
+      .status-badge {
+        display: inline-flex;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+      }
+      .status-pending {
+        background: rgba(250, 204, 21, 0.12);
+        color: var(--warning);
+      }
+      .status-confirmed {
+        background: rgba(74, 222, 128, 0.12);
+        color: var(--success);
+      }
+      .status-failed {
+        background: rgba(248, 113, 113, 0.12);
+        color: var(--danger);
+      }
+      .msg { font-size: 12px; color: var(--muted); margin-top: 4px; }
+      code { font-family: "JetBrains Mono", monospace; font-size: 12px; }
+      @media (max-width: 900px) {
+        body { flex-direction: column; }
+        aside {
+          width: 100%; flex-direction: row;
+          justify-content: space-between; align-items: center;
+          border-right: none; border-bottom: 1px solid var(--border);
+        }
+        main { padding: 16px; }
+      }
+    </style>
+  </head>
+  <body>
+    <aside>
+      <div class="logo">
+        <div class="logo-icon">EC</div>
+        <div class="logo-text">E‑Commerce Admin</div>
+      </div>
+      <div>
+        <div class="nav-title">Sections</div>
+        <ul class="nav">
+          <li class="active">
+            <span class="nav-dot"></span><span>Dashboard</span>
+          </li>
+          <li>
+            <span class="nav-dot"></span><span>Catalog</span>
+          </li>
+          <li>
+            <span class="nav-dot"></span><span>Cart</span>
+          </li>
+          <li>
+            <span class="nav-dot"></span><span>Orders</span>
+          </li>
+          <li>
+            <span class="nav-dot"></span><span>Payments</span>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <main>
+      <header>
+        <div>
+          <h1 id="section-title">Order Tracking Dashboard</h1>
+          <p id="section-sub">
+            End‑to‑end test: products → cart → order → payment, all from the web UI.
+          </p>
+          <div class="tabs">
+            <button class="tab active" data-view="dashboard">Dashboard</button>
+            <button class="tab" data-view="catalog">Catalog</button>
+            <button class="tab" data-view="cart">Cart</button>
+            <button class="tab" data-view="orders">Orders</button>
+            <button class="tab" data-view="payments">Payments</button>
+          </div>
+        </div>
+        <div>
+          <span class="pill">
+            <span class="pill-dot"></span>
+            Connected to REST microservices
+          </span>
+        </div>
+      </header>
+
+      <!-- DASHBOARD VIEW -->
+      <section id="view-dashboard" class="card">
+        <div class="card-title">Quick scenario guide</div>
+        <div class="card-sub">
+          1) Add products to cart → 2) Create order → 3) Confirm payment → 4) Watch table update.
+        </div>
+        <div class="row" style="margin-top:12px;">
+          <div class="col">
+            <div class="card-title" style="font-size:14px;">Orders overview</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th><th>User</th><th>Total</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="dash-orders-body"></tbody>
+            </table>
+            <div id="dash-msg" class="msg"></div>
+          </div>
+          <div class="col">
+            <div class="card-title" style="font-size:14px;">Metrics</div>
+            <div class="row" style="margin-top:6px;">
+              <div class="col">
+                <div class="card-sub">Total orders</div>
+                <div id="m-total" style="font-size:22px;font-weight:600;">0</div>
+              </div>
+              <div class="col">
+                <div class="card-sub">Pending</div>
+                <div id="m-pending" style="font-size:22px;font-weight:600;">0</div>
+              </div>
+              <div class="col">
+                <div class="card-sub">Confirmed</div>
+                <div id="m-confirmed" style="font-size:22px;font-weight:600;">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CATALOG VIEW -->
+      <section id="view-catalog" class="card" style="display:none;">
+        <div class="card-title">Products catalog</div>
+        <div class="card-sub">
+          Data from <code>catalog-service</code> (GET /products).
+        </div>
+        <div class="row">
+          <div class="col">
+            <table>
+              <thead>
+                <tr><th>ID</th><th>Name</th><th>Price</th><th></th></tr>
+              </thead>
+              <tbody id="catalog-body"></tbody>
+            </table>
+            <div id="catalog-msg" class="msg"></div>
+          </div>
+          <div class="col">
+            <div class="card-title" style="font-size:14px;">Add to cart</div>
+            <div class="field">
+              <label>Product ID</label>
+              <input id="cart-product-id" type="number" />
+            </div>
+            <div class="field">
+              <label>Quantity</label>
+              <input id="cart-qty" type="number" value="1" />
+            </div>
+            <button id="btn-add-cart" class="btn btn-primary">
+              Add to cart
+            </button>
+            <div id="add-cart-msg" class="msg"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CART VIEW -->
+      <section id="view-cart" class="card" style="display:none;">
+        <div class="card-title">Cart</div>
+        <div class="card-sub">
+          Data from <code>cart-service</code> (GET /cart). Use buttons to create an order.
+        </div>
+        <div class="row">
+          <div class="col">
+            <table>
+              <thead>
+                <tr><th>Product</th><th>Qty</th><th>Price</th></tr>
+              </thead>
+              <tbody id="cart-body"></tbody>
+            </table>
+            <div class="msg">Total: <span id="cart-total">0</span></div>
+          </div>
+          <div class="col">
+            <div class="field">
+              <label>User ID</label>
+              <input id="order-user" value="u1" />
+            </div>
+            <button id="btn-create-order" class="btn btn-primary">
+              Create order from cart
+            </button>
+            <div id="order-from-cart-msg" class="msg"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ORDERS VIEW -->
+      <section id="view-orders" class="card" style="display:none;">
+        <div class="card-title">Orders</div>
+        <div class="card-sub">
+          Data from <code>order-service</code> (GET /orders, PUT /orders/:id).
+        </div>
+        <div class="row">
+          <div class="col">
+            <table>
+              <thead>
+                <tr><th>ID</th><th>User</th><th>Total</th><th>Status</th></tr>
+              </thead>
+              <tbody id="orders-body"></tbody>
+            </table>
+            <div id="orders-msg" class="msg"></div>
+          </div>
+          <div class="col">
+            <div class="field">
+              <label>Order ID to confirm</label>
+              <input id="confirm-order-id" />
+            </div>
+            <button id="btn-confirm-order" class="btn btn-primary">
+              Mark as CONFIRMED
+            </button>
+            <div id="confirm-order-msg" class="msg"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAYMENTS VIEW -->
+      <section id="view-payments" class="card" style="display:none;">
+        <div class="card-title">Payments</div>
+        <div class="card-sub">
+          Data from <code>payment-service</code> (GET /payments, POST /payments).
+        </div>
+        <div class="row">
+          <div class="col">
+            <table>
+              <thead>
+                <tr><th>ID</th><th>Order</th><th>Amount</th><th>Status</th></tr>
+              </thead>
+              <tbody id="payments-body"></tbody>
+            </table>
+            <div id="payments-msg" class="msg"></div>
+          </div>
+          <div class="col">
+            <div class="field">
+              <label>Order ID</label>
+              <input id="pay-order-id" />
+            </div>
+            <div class="field">
+              <label>Amount</label>
+              <input id="pay-amount" type="number" />
+            </div>
+            <button id="btn-create-payment" class="btn btn-primary">
+              Create payment (CONFIRMED)
+            </button>
+            <div id="create-payment-msg" class="msg"></div>
+          </div>
+        </div>
+      </section>
+
+      <script>
+        // simple config: adapt to your actual routes if needed
+        const API = {
+ 	 catalog: "/api/products",
+ 	 cart: "/api/cart",
+ 	 addToCart: "/api/cart/items",
+ 	 orders: "/api/orders",
+ 	 orderById: (id) => "/api/orders/" + id,
+ 	 payments: "/api/payments"
+	};
+
+        function setActiveView(view) {
+          document.querySelectorAll(".tab").forEach((t) => {
+            t.classList.toggle("active", t.dataset.view === view);
+          });
+          document.querySelectorAll("aside .nav li").forEach((li, idx) => {
+            const map = ["dashboard", "catalog", "cart", "orders", "payments"];
+            li.classList.toggle("active", map[idx] === view);
+          });
+          ["dashboard","catalog","cart","orders","payments"].forEach((v) => {
+            document.getElementById("view-" + v).style.display =
+              v === view ? "block" : "none";
+          });
+          const titleMap = {
+            dashboard: "Order Tracking Dashboard",
+            catalog: "Catalog",
+            cart: "Cart",
+            orders: "Orders",
+            payments: "Payments"
+          };
+          document.getElementById("section-title").textContent = titleMap[view];
+        }
+
+        document.querySelectorAll(".tab").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            setActiveView(btn.dataset.view);
+          });
+        });
+
+        // --- Catalog ---
+        async function loadCatalog() {
+          const body = document.getElementById("catalog-body");
+          const msg = document.getElementById("catalog-msg");
+          msg.textContent = "Loading products...";
+          try {
+            const resp = await fetch(API.catalog);
+            const products = await resp.json();
+            body.innerHTML = "";
+            products.forEach((p) => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>${p.id}</td>
+                <td>${p.name}</td>
+                <td>${p.price}</td>
+                <td><button class="btn btn-outline" data-id="${p.id}">Use</button></td>
+              `;
+              body.appendChild(tr);
+            });
+            msg.textContent = `Loaded ${products.length} products.`;
+            body.querySelectorAll("button").forEach((b) => {
+              b.addEventListener("click", () => {
+                document.getElementById("cart-product-id").value = b.dataset.id;
+              });
+            });
+          } catch (e) {
+            msg.textContent = "Error: " + e;
+          }
+        }
+
+        document
+          .getElementById("btn-add-cart")
+          .addEventListener("click", async () => {
+            const pid = document.getElementById("cart-product-id").value;
+            const qty = Number(document.getElementById("cart-qty").value || 1);
+            const msg = document.getElementById("add-cart-msg");
+            if (!pid) {
+              msg.textContent = "Choose a product first.";
+              return;
+            }
+            msg.textContent = "Adding...";
+            try {
+              await fetch(API.addToCart, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  productId: Number(pid),
+                  quantity: qty
+                })
+              });
+              msg.textContent = "Added to cart.";
+              loadCart();
+            } catch (e) {
+              msg.textContent = "Error: " + e;
+            }
+          });
+
+        // --- Cart ---
+        async function loadCart() {
+          const body = document.getElementById("cart-body");
+          const totalEl = document.getElementById("cart-total");
+          body.innerHTML = "";
+          try {
+            const resp = await fetch(API.cart);
+            const data = await resp.json();
+            const items = data.items || [];
+            items.forEach((i) => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>${i.productId || ""}</td>
+                <td>${i.quantity || 0}</td>
+                <td>${i.price ?? 0}</td>
+              `;
+              body.appendChild(tr);
+            });
+            totalEl.textContent = data.total ?? 0;
+          } catch (e) {
+        totalEl.textContent = items.length;
+          }
+        }
+
+        document
+          .getElementById("btn-create-order")
+          .addEventListener("click", async () => {
+            const msg = document.getElementById("order-from-cart-msg");
+            const userId = document.getElementById("order-user").value || "u1";
+            msg.textContent = "Creating order...";
+            try {
+              const cartResp = await fetch(API.cart);
+              const cart = await cartResp.json();
+              await fetch(API.orders, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  userId,
+                  items: cart.items || [],
+                  total: cart.total || 0,
+                  status: "PENDING"
+                })
+              });
+              msg.textContent = "Order created from cart.";
+              loadOrders();
+              loadDashboardOrders();
+            } catch (e) {
+              msg.textContent = "Error: " + e;
+            }
+          });
+
+        // --- Orders ---
+        function renderStatus(status) {
+          const s = (status || "PENDING").toUpperCase();
+          const cls =
+            s === "CONFIRMED"
+              ? "status-confirmed"
+              : s === "FAILED"
+              ? "status-failed"
+              : "status-pending";
+          return `<span class="status-badge ${cls}">${s}</span>`;
+        }
+
+        async function loadOrders() {
+          const body = document.getElementById("orders-body");
+          const msg = document.getElementById("orders-msg");
+          body.innerHTML = "";
+          msg.textContent = "Loading orders...";
+          try {
+            const resp = await fetch(API.orders);
+            const data = await resp.json();
+            const orders = data.orders || [];
+            orders.forEach((o) => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>${o.id || ""}</td>
+                <td>${o.userId || ""}</td>
+                <td>${o.total ?? 0}</td>
+                <td>${renderStatus(o.status)}</td>
+              `;
+              body.appendChild(tr);
+            });
+            msg.textContent = `Loaded ${orders.length} orders.`;
+          } catch (e) {
+            msg.textContent = "Error: " + e;
+          }
+        }
+
+        document
+          .getElementById("btn-confirm-order")
+          .addEventListener("click", async () => {
+            const id = document.getElementById("confirm-order-id").value;
+            const msg = document.getElementById("confirm-order-msg");
+            if (!id) {
+              msg.textContent = "Enter order ID.";
+              return;
+            }
+            msg.textContent = "Updating...";
+            try {
+              await fetch(API.orderById(id), {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: "CONFIRMED" })
+              });
+              msg.textContent = "Order marked as CONFIRMED.";
+              loadOrders();
+              loadDashboardOrders();
+            } catch (e) {
+              msg.textContent = "Error: " + e;
+            }
+          });
+
+        // --- Payments ---
+        async function loadPayments() {
+          const body = document.getElementById("payments-body");
+          const msg = document.getElementById("payments-msg");
+          body.innerHTML = "";
+          msg.textContent = "Loading payments...";
+          try {
+            const resp = await fetch(API.payments);
+            const data = await resp.json();
+            const payments = data.payments || [];
+            payments.forEach((p) => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>${p.id || ""}</td>
+                <td>${p.orderId || ""}</td>
+                <td>${p.amount ?? 0}</td>
+                <td>${renderStatus(p.status)}</td>
+              `;
+              body.appendChild(tr);
+            });
+            msg.textContent = `Loaded ${payments.length} payments.`;
+          } catch (e) {
+            msg.textContent = "Error: " + e;
+          }
+        }
+
+        document
+          .getElementById("btn-create-payment")
+          .addEventListener("click", async () => {
+            const orderId = document.getElementById("pay-order-id").value;
+            const amount = Number(
+              document.getElementById("pay-amount").value || 0
+            );
+            const msg = document.getElementById("create-payment-msg");
+            if (!orderId) {
+              msg.textContent = "Enter order ID.";
+              return;
+            }
+            msg.textContent = "Creating payment...";
+            try {
+              await fetch(API.payments, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  orderId,
+                  amount,
+                  status: "CONFIRMED"
+                })
+              });
+              msg.textContent = "Payment created.";
+              loadPayments();
+            } catch (e) {
+              msg.textContent = "Error: " + e;
+            }
+          });
+
+        // --- Dashboard Orders (overview) ---
+        async function loadDashboardOrders() {
+          const body = document.getElementById("dash-orders-body");
+          const msg = document.getElementById("dash-msg");
+          const mTotal = document.getElementById("m-total");
+          const mPending = document.getElementById("m-pending");
+          const mConfirmed = document.getElementById("m-confirmed");
+          body.innerHTML = "";
+          msg.textContent = "Loading orders...";
+          try {
+            const resp = await fetch(API.orders);
+            const data = await resp.json();
+            const orders = data.orders || [];
+            let pending = 0;
+            let confirmed = 0;
+            orders.forEach((o) => {
+              const s = (o.status || "PENDING").toUpperCase();
+              if (s === "PENDING") pending++;
+              else if (s === "CONFIRMED") confirmed++;
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>${o.id || ""}</td>
+                <td>${o.userId || ""}</td>
+                <td>${o.total ?? 0}</td>
+                <td>${renderStatus(o.status)}</td>
+              `;
+              body.appendChild(tr);
+            });
+            mTotal.textContent = orders.length;
+            mPending.textContent = pending;
+            mConfirmed.textContent = confirmed;
+            msg.textContent = `Showing ${orders.length} orders.`;
+          } catch (e) {
+            msg.textContent = "Error: " + e;
+          }
+        }
+
+        // Initial load
+        loadCatalog();
+        loadCart();
+        loadOrders();
+        loadPayments();
+        loadDashboardOrders();
+        setInterval(loadDashboardOrders, 5000);
+      </script>
+    </main>
+  </body>
+</html>
+

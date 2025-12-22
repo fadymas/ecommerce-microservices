@@ -1,0 +1,137 @@
+ِconst express = require("express")
+const app = express();
+const PORT = process.env.PORT || 8080;
+
+const CATALOG_URL = process.env.CATALOG_SERVICE_URL || "http://localhost:8001";
+const CART_URL = process.env.CART_SERVICE_URL || "http://localhost:8002";
+const ORDER_URL = process.env.ORDER_SERVICE_URL || "http://localhost:8003";
+const PAYMENT_URL = process.env.PAYMENT_SERVICE_URL || "http://localhost:8004";
+
+app.use(express.static("public"));
+app.use(express.json());
+
+console.log("🔧 Microservice URLs:");
+console.log(`   Catalog: ${CATALOG_URL}`);
+console.log(`   Cart: ${CART_URL}`);
+console.log(`   Order: ${ORDER_URL}`);
+console.log(`   Payment: ${PAYMENT_URL}`);
+
+app.get("/api/products", async (req, res) => {
+  try {
+    const resp = await fetch(`${CATALOG_URL}/products`);
+    const data = await resp.json();
+    res.json(data);
+  } catch (err) {
+    console.error("❌ Catalog error:", err.message);
+    res.status(500).json({ error: "failed to fetch products" });
+  }
+});
+
+app.get("/api/cart", async (req, res) => {
+  try {
+    const resp = await fetch(`${CART_URL}/cart`);
+    const data = await resp.json();
+    res.json(data);
+  } catch (err) {
+    console.error("❌ Cart error:", err.message);
+    res.status(500).json({ error: "failed to fetch cart" });
+  }
+});
+
+app.post("/api/cart/items", async (req, res) => {
+  try {
+    const resp = await fetch(`${CART_URL}/cart/items`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req.body)
+    });
+    const data = await resp.json();
+    res.json(data);
+  } catch (err) {
+    console.error("❌ Cart error:", err.message);
+    res.status(500).json({ error: "failed to add to cart" });
+  }
+});
+
+app.get("/api/orders", async (req, res) => {
+  try {
+    const resp = await fetch(`${ORDER_URL}/orders`);
+    const data = await resp.json();
+    res.json(data);
+  } catch (err) {
+    console.error("❌ Order error:", err.message);
+    res.status(500).json({ error: "failed to fetch orders" });
+  }
+});
+
+app.post("/api/orders", async (req, res) => {
+  try {
+    const resp = await fetch(`${ORDER_URL}/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req.body)
+    });
+    const data = await resp.json();
+    res.json(data);
+  } catch (err) {
+    console.error("❌ Order error:", err.message);
+    res.status(500).json({ error: "failed to create order" });
+  }
+});
+
+app.put("/api/orders/:id", async (req, res) => {
+  try {
+    const resp = await fetch(`${ORDER_URL}/orders/${req.params.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req.body)
+    });
+    const data = await resp.json();
+    res.json(data);
+  } catch (err) {
+    console.error("❌ Order error:", err.message);
+    res.status(500).json({ error: "failed to update order" });
+  }
+});
+
+app.get("/api/payments", async (req, res) => {
+  try {
+    const resp = await fetch(`${PAYMENT_URL}/payments`);
+    const data = await resp.json();
+    res.json(data);
+  } catch (err) {
+    console.error("❌ Payment error:", err.message);
+    res.status(500).json({ error: "failed to fetch payments" });
+  }
+});
+
+app.post("/api/payments", async (req, res) => {
+  try {
+    const resp = await fetch(`${PAYMENT_URL}/payments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req.body)
+    });
+    const data = await resp.json();
+    res.json(data);
+  } catch (err) {
+    console.error("❌ Payment error:", err.message);
+    res.status(500).json({ error: "failed to create payment" });
+  }
+});
+
+app.get("/health", (req, res) => {
+  res.json({ 
+    status: "ok",
+    services: {
+      catalog: CATALOG_URL,
+      cart: CART_URL,
+      order: ORDER_URL,
+      payment: PAYMENT_URL
+    }
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`✅ Dashboard listening on port ${PORT}`);
+});

@@ -1,0 +1,139 @@
+const express = require('express');
+const bodyParser = require('body-parser');
+const db = require('./database');
+
+const app = express();
+app.use(bodyParser.json());
+
+// GET cart by user
+app.get('/cart/:userId', (req, res) => {
+    db.all("SELECT * FROM carts WHERE userId=?", [req.params.userId], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+// POST add item to cart
+app.post('/cart/:userId', (req, res) => {
+    const { productId, quantity } = req.body;
+    db.run(`INSERT INTO carts (userId, productId, quantity) VALUES (?, ?, ?)`,
+        [req.params.userId, productId, quantity], function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ id: this.lastID });
+        });
+});
+
+// PUT update quantity
+app.put('/cart/:userId/:productId', (req, res) => {
+    const { quantity } = req.body;
+    db.run("UPDATE carts SET quantity=? WHERE userId=? AND productId=?",
+        [quantity, req.params.userId, req.params.productId], function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ updated: true });
+        });
+});
+
+// DELETE item from cart
+app.delete('/cart/:userId/:productId', (req, res) => {
+    db.run("DELETE FROM carts WHERE userId=? AND productId=?",
+        [req.params.userId, req.params.productId], function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ deleted: true });
+        });
+});
+
+const PORT = process.env.PORT || 3002;
+app.listen(PORT, () => console.log(`Cart Service running on port ${PORT}`));
+
+// Add endpoints for dashboard compatibility
+app.get('/cart', (req, res) => {
+  db.all("SELECT * FROM carts", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ items: rows });
+  });
+});
+
+app.post('/cart/items', (req, res) => {
+  const { productId, quantity } = req.body;
+  const userId = 'default-user'; // Use a default user
+  
+  db.run(
+    "INSERT INTO carts (userId, productId, quantity) VALUES (?, ?, ?)",
+    [userId, productId, quantity],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json({ 
+        success: true,
+        cartItemId: this.lastID,
+        productId,
+        quantity
+      });
+    }
+  );
+});
+
+// Add endpoints for dashboard compatibility
+app.get('/cart', (req, res) => {
+  db.all("SELECT * FROM carts", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ items: rows });
+  });
+});
+
+app.post('/cart/items', (req, res) => {
+  const { productId, quantity } = req.body;
+  const userId = 'default-user'; // Use a default user
+  
+  db.run(
+    "INSERT INTO carts (userId, productId, quantity) VALUES (?, ?, ?)",
+    [userId, productId, quantity],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json({ 
+        success: true,
+        cartItemId: this.lastID,
+        productId,
+        quantity
+      });
+    }
+  );
+});
+
+// Add endpoints for dashboard compatibility
+app.get('/cart', (req, res) => {
+  db.all("SELECT * FROM carts", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ items: rows });
+  });
+});
+
+app.post('/cart/items', (req, res) => {
+  const { productId, quantity } = req.body;
+  const userId = 'default-user'; // Use a default user
+  
+  db.run(
+    "INSERT INTO carts (userId, productId, quantity) VALUES (?, ?, ?)",
+    [userId, productId, quantity],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json({ 
+        success: true,
+        cartItemId: this.lastID,
+        productId,
+        quantity
+      });
+    }
+  );
+});

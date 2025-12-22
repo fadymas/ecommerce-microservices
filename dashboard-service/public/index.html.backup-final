@@ -112,7 +112,6 @@
   }
 </style>
 </head>
-<script src="main.js"></script>
 <body>
 <aside>
   <div class="logo">
@@ -266,13 +265,12 @@
   </section>
 
 <script>
-// API configuration using proxy
+// API configuration using dashboard proxy
 const API = {
   catalog: "/api/products",
   catalogCreate: "/api/catalog",
   catalogItem: (id) => `/api/catalog/${id}`,
-  cart: "/api/cart",   // THIS MUST BE /api/cart
-  addToCart: "/api/cart/items",
+  cart: "/api/cart",
   orders: "/api/orders",
   orderById: (id) => `/api/orders/${id}`,
   payments: "/api/payments"
@@ -291,40 +289,51 @@ function setActiveView(view) {
   document.getElementById("section-title").textContent = titleMap[view];
 }
 
-document.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", () => setActiveView(btn.dataset.view)));
+document.querySelectorAll(".tab").forEach(btn => {
+  btn.addEventListener("click", () => setActiveView(btn.dataset.view));
+});
 
+// --- Helper ---
 function renderStatus(status) {
   const s = (status || "PENDING").toUpperCase();
   const cls = s === "CONFIRMED" ? "status-confirmed" : s === "FAILED" ? "status-failed" : "status-pending";
   return `<span class="status-badge ${cls}">${s}</span>`;
 }
 
-// CATALOG
-async function loadCatalog() {
-  const body = document.getElementById("catalog-body");
-  const msg = document.getElementById("catalog-msg");
-  msg.textContent = "Loading products...";
+// --- Catalog ---
+async function loadCart() {
+  const body = document.getElementById("cart-body");
+  const totalEl = document.getElementById("cart-total");
+  body.innerHTML = "<tr><td colspan='3'>Loading...</td></tr>";
+  console.log("Frontend: Calling /api/cart");
   try {
-    const resp = await fetch(API.catalog);
-    const products = await resp.json();
+    const resp = await fetch(API.cart);
+    console.log("Frontend: Response status:", resp.status);
+    const data = await resp.json();
+    console.log("Frontend: Received cart data:", data);
+
+    let items = data.items || data || [];
+    let total = data.total || 0;
+
     body.innerHTML = "";
-    products.forEach(p => {
+    items.forEach(i => {
+      const price = i.price || 0;
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${p.id}</td>
-        <td>${p.name}</td>
-        <td>${(p.price || 0).toFixed(2)}</td>
-        <td>
-          <button class="btn btn-outline" onclick="useProduct(${p.id})">Use</button>
-          <button class="btn btn-outline" onclick="editProduct(${p.id}, '${p.name.replace(/'/g, "\\'")}', ${p.price || 0}, ${p.stock || 0})">Edit</button>
-          <button class="btn btn-outline" onclick="deleteProduct(${p.id})">Delete</button>
-        </td>
+        <td>${i.productId || "Unknown"}</td>
+        <td>${i.quantity || 1}</td>
+        <td>${price.toFixed(2)}</td>
       `;
       body.appendChild(tr);
     });
-    msg.textContent = `Loaded ${products.length} products.`;
+
+    if (total === 0) {
+      total = items.reduce((sum, i) => sum + (i.price || 0) * (i.quantity || 1), 0);
+    }
+    totalEl.textContent = total.toFixed(2);
   } catch (e) {
-    msg.textContent = "Error loading catalog: " + e;
+    console.error("Frontend cart error:", e);
+    body.innerHTML = "<tr><td colspan='3'>Failed to load cart</td></tr>";
   }
 }
 
@@ -339,7 +348,7 @@ document.getElementById("btn-create-product").addEventListener("click", async ()
   const stock = Number(document.getElementById("new-product-stock").value || 0);
   const msg = document.getElementById("create-product-msg");
   if (!name || isNaN(price)) {
-    msg.textContent = "Name and Price required.";
+    msg.textContent = "Name and Price are required.";
     return;
   }
   msg.textContent = "Creating...";
@@ -350,7 +359,7 @@ document.getElementById("btn-create-product").addEventListener("click", async ()
       body: JSON.stringify({ name, description, price, stock })
     });
     const result = await resp.json();
-    msg.textContent = `Created! ID: ${result.id || 'unknown'}`;
+    msg.textContent = `Product created with ID: ${result.id || result._id || 'unknown'}`;
     document.getElementById("new-product-name").value = "";
     document.getElementById("new-product-desc").value = "";
     document.getElementById("new-product-price").value = "";
@@ -362,31 +371,38 @@ document.getElementById("btn-create-product").addEventListener("click", async ()
 });
 
 async function editProduct(id, currentName, currentPrice, currentStock) {
-  const newName = prompt("New name:", currentName);
+  const newName = prompt("Enter new name:", currentName);
   if (newName === null) return;
-  const newPrice = prompt("New price:", currentPrice);
+  const newPrice = prompt("Enter new price:", currentPrice);
   if (newPrice === null) return;
-  const newStock = prompt("New stock:", currentStock);
+  const newStock = prompt("Enter new stock:", currentStock);
   if (newStock === null) return;
+
+  const msg = document.getElementById("catalog-msg");
+  msg.textContent = "Updating...";
   try {
     await fetch(API.catalogItem(id), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: newName, price: Number(newPrice), stock: Number(newStock) })
     });
+    msg.textContent = "Product updated!";
     loadCatalog();
   } catch (e) {
-    alert("Edit failed: " + e);
+    msg.textContent = "Error: " + e;
   }
 }
 
 async function deleteProduct(id) {
-  if (!confirm("Delete product?")) return;
+  if (!confirm(`Delete product ID ${id}?`)) return;
+  const msg = document.getElementById("catalog-msg");
+  msg.textContent = "Deleting...";
   try {
     await fetch(API.catalogItem(id), { method: "DELETE" });
+    msg.textContent = "Product deleted!";
     loadCatalog();
   } catch (e) {
-    alert("Delete failed: " + e);
+    msg.textContent = "Error: " + e;
   }
 }
 
@@ -395,12 +411,12 @@ document.getElementById("btn-add-cart").addEventListener("click", async () => {
   const qty = Number(document.getElementById("cart-qty").value || 1);
   const msg = document.getElementById("add-cart-msg");
   if (!pid) {
-    msg.textContent = "Enter product ID";
+    msg.textContent = "Enter a product ID.";
     return;
   }
   msg.textContent = "Adding...";
   try {
-    await fetch(API.addToCart, {
+    await fetch(API.cartItems, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productId: pid, quantity: qty })
@@ -412,7 +428,7 @@ document.getElementById("btn-add-cart").addEventListener("click", async () => {
   }
 });
 
-// CART
+// --- Cart ---
 async function loadCart() {
   const body = document.getElementById("cart-body");
   const totalEl = document.getElementById("cart-total");
@@ -421,17 +437,23 @@ async function loadCart() {
     const resp = await fetch(API.cart);
     const data = await resp.json();
 
-    let items = data.items || [];
-    let total = data.total || 0;
+    let items = [];
+    let total = 0;
+
+    if (Array.isArray(data)) {
+      items = data;
+    } else if (data.items) {
+      items = data.items;
+      total = data.total || 0;
+    }
 
     body.innerHTML = "";
     items.forEach(i => {
-      const price = i.price || 0;
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${i.productId}</td>
-        <td>${i.quantity || 1}</td>
-        <td>${price.toFixed(2)}</td>
+        <td>${i.productId || i.product || "Unknown"}</td>
+        <td>${i.quantity || 0}</td>
+        <td>${(i.price || 0).toFixed(2)}</td>
       `;
       body.appendChild(tr);
     });
@@ -441,69 +463,64 @@ async function loadCart() {
     }
     totalEl.textContent = total.toFixed(2);
   } catch (e) {
-    body.innerHTML = "<tr><td colspan='3'>Error</td></tr>";
+    body.innerHTML = "<tr><td colspan='3'>Error loading cart</td></tr>";
+    console.error(e);
   }
 }
 
 document.getElementById("btn-create-order").addEventListener("click", async () => {
-  // Use the existing input in the Cart section
-  const userIdInput = document.getElementById("order-user");
-  const userId = (userIdInput ? userIdInput.value.trim() : "") || "u1";
-
-  const msg = document.getElementById("orders-msg");
-  msg.textContent = "Creating order from cart...";
-
+  const msg = document.getElementById("order-from-cart-msg");
+  const userId = document.getElementById("order-user").value || "u1";
+  msg.textContent = "Creating order...";
   try {
-    // 1) Get current cart with prices and total
     const cartResp = await fetch(API.cart);
-    const cart = await cartResp.json();   // { items: [...], total: 123.45 }
+    const cartData = await cartResp.json();
 
-    // 2) Create order with real total and items
-    const orderResp = await fetch(API.orders, {
+    let items = [];
+    let total = 0;
+    if (Array.isArray(cartData)) {
+      items = cartData;
+    } else if (cartData.items) {
+      items = cartData.items;
+      total = cartData.total || 0;
+    }
+    if (total === 0) {
+      total = items.reduce((sum, i) => sum + (i.price || 0) * (i.quantity || 1), 0);
+    }
+
+    await fetch(API.orders, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        items: cart.items || [],
-        total: cart.total || 0,
-        status: "PENDING"
-      })
+      body: JSON.stringify({ userId, items, total, status: "PENDING" })
     });
-
-    const created = await orderResp.json();
-    console.log("Created order:", created);
-
-    // 3) Clear cart after creating order
-    await fetch(API.cart, { method: "DELETE" });
-
-    msg.textContent = `Order created with total ${(cart.total || 0).toFixed(2)}`;
-    loadCart();
+    msg.textContent = "Order created!";
     loadOrders();
     loadDashboardOrders();
+    loadCart();
   } catch (e) {
-    console.error("Create order from cart failed:", e);
-    msg.textContent = "Error creating order: " + e;
+    msg.textContent = "Error: " + e;
   }
 });
 
-// ORDERS
+// --- Orders ---
 async function loadOrders() {
   const body = document.getElementById("orders-body");
   const msg = document.getElementById("orders-msg");
   body.innerHTML = "";
-  msg.textContent = "Loading...";
+  msg.textContent = "Loading orders...";
   try {
     const resp = await fetch(API.orders);
     const data = await resp.json();
-    const orders = Array.isArray(data) ? data : data.orders || [];
+    const orders = Array.isArray(data) ? data : (data.orders || []);
+
     orders.forEach(o => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${o.id}</td>
-        <td>${o.userId || o.user}</td>
+        <td>${o.id || ""}</td>
+        <td>${o.userId || o.user || ""}</td>
         <td>${(o.total || 0).toFixed(2)}</td>
         <td>${renderStatus(o.status)}</td>
-        <td>${o.status === "PENDING" ? `<button class="btn btn-primary" onclick="payOrder(${o.id}, ${o.total})">Pay Now</button>` : ""}</td>
+        <td>${o.status?.toUpperCase() === "PENDING" ? `<button class="btn btn-primary" onclick="payOrder(${o.id}, ${o.total})">Pay Now</button>` : ""}</td>
       `;
       body.appendChild(tr);
     });
@@ -514,19 +531,21 @@ async function loadOrders() {
 }
 
 async function payOrder(orderId, amount) {
-  if (!confirm(`Pay $${amount.toFixed(2)} for order #${orderId}?`)) return;
+  if (!confirm(`Confirm payment of $${Number(amount).toFixed(2)} for Order #${orderId}?`)) return;
   try {
     await fetch(API.payments, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ orderId, amount, status: "CONFIRMED" })
     });
+
     await fetch(API.orderById(orderId), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "CONFIRMED" })
     });
-    alert("Payment successful!");
+
+    alert("Payment successful! Order confirmed.");
     loadOrders();
     loadPayments();
     loadDashboardOrders();
@@ -535,21 +554,44 @@ async function payOrder(orderId, amount) {
   }
 }
 
-// PAYMENTS
+document.getElementById("btn-confirm-order").addEventListener("click", async () => {
+  const id = document.getElementById("confirm-order-id").value;
+  const msg = document.getElementById("confirm-order-msg");
+  if (!id) {
+    msg.textContent = "Enter order ID.";
+    return;
+  }
+  msg.textContent = "Updating...";
+  try {
+    await fetch(API.orderById(id), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "CONFIRMED" })
+    });
+    msg.textContent = "Order confirmed.";
+    loadOrders();
+    loadDashboardOrders();
+  } catch (e) {
+    msg.textContent = "Error: " + e;
+  }
+});
+
+// --- Payments ---
 async function loadPayments() {
   const body = document.getElementById("payments-body");
   const msg = document.getElementById("payments-msg");
   body.innerHTML = "";
-  msg.textContent = "Loading...";
+  msg.textContent = "Loading payments...";
   try {
     const resp = await fetch(API.payments);
     const data = await resp.json();
-    const payments = Array.isArray(data) ? data : data.payments || [];
+    const payments = Array.isArray(data) ? data : (data.payments || []);
+
     payments.forEach(p => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${p.id}</td>
-        <td>${p.orderId}</td>
+        <td>${p.id || ""}</td>
+        <td>${p.orderId || ""}</td>
         <td>${(p.amount || 0).toFixed(2)}</td>
         <td>${renderStatus(p.status)}</td>
       `;
@@ -561,7 +603,7 @@ async function loadPayments() {
   }
 }
 
-// DASHBOARD
+// --- Dashboard Orders ---
 async function loadDashboardOrders() {
   const body = document.getElementById("dash-orders-body");
   const msg = document.getElementById("dash-msg");
@@ -569,16 +611,18 @@ async function loadDashboardOrders() {
   const mPending = document.getElementById("m-pending");
   const mConfirmed = document.getElementById("m-confirmed");
 
+  body.innerHTML = "";
+  msg.textContent = "Loading...";
   try {
     const resp = await fetch(API.orders);
     const data = await resp.json();
-    const orders = Array.isArray(data) ? data : data.orders || [];
+    const orders = Array.isArray(data) ? data : (data.orders || []);
 
     let pending = 0, confirmed = 0;
-    body.innerHTML = "";
     orders.forEach(o => {
-      if ((o.status || "PENDING").toUpperCase() === "PENDING") pending++;
-      if ((o.status || "").toUpperCase() === "CONFIRMED") confirmed++;
+      const s = (o.status || "PENDING").toUpperCase();
+      if (s === "PENDING") pending++;
+      else if (s === "CONFIRMED") confirmed++;
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -599,7 +643,7 @@ async function loadDashboardOrders() {
   }
 }
 
-// Initial load and polling
+// Initial load + polling
 loadCatalog();
 loadCart();
 loadOrders();
