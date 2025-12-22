@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Order Tracking Dashboard</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 20px; }
+      h1 { margin-bottom: 10px; }
+      table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+      th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+      th { background-color: #f0f0f0; }
+      .status-PENDING { color: #d58512; font-weight: bold; }
+      .status-CONFIRMED { color: #3c763d; font-weight: bold; }
+      .status-FAILED { color: #a94442; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <h1>Order Tracking Dashboard</h1>
+    <button id="refresh">Refresh Orders</button>
+    <span id="msg"></span>
+
+    <table id="ordersTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>User</th>
+          <th>Total</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <script>
+      async function loadOrders() {
+        const msg = document.getElementById("msg");
+        const tbody = document.querySelector("#ordersTable tbody");
+        msg.textContent = " Loading...";
+        try {
+          const resp = await fetch("/api/orders");
+          const data = await resp.json();
+          const orders = data.orders || [];
+          tbody.innerHTML = "";
+          if (orders.length === 0) {
+            msg.textContent = " No orders found.";
+            return;
+          }
+          orders.forEach((o) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${o.id || ""}</td>
+              <td>${o.userId || ""}</td>
+              <td>${o.total || 0}</td>
+              <td class="status-${(o.status || "").toUpperCase()}">${o.status || ""}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+          msg.textContent = ` Loaded ${orders.length} orders.`;
+        } catch (e) {
+          msg.textContent = " Error loading orders: " + e;
+        }
+      }
+
+      document.getElementById("refresh").addEventListener("click", loadOrders);
+      loadOrders();
+      setInterval(loadOrders, 5000);
+    </script>
+  </body>
+</html>
+
