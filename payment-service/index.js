@@ -23,4 +23,37 @@ app.get('/payment/:paymentId', (req, res) => {
   });
 });
 
-app.listen(3004, () => console.log('Payment Service running on port 3004'));
+const PORT = process.env.PORT || 3004;
+app.listen(PORT, () => console.log(`Payment Service running on port ${PORT}`));
+
+// Add endpoints for dashboard compatibility
+app.get('/payments', (req, res) => {
+  db.all("SELECT * FROM payments", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ payments: rows });
+  });
+});
+
+app.post('/payments', (req, res) => {
+  const { orderId, amount } = req.body;
+  const paymentId = Date.now().toString();
+  
+  db.run(
+    "INSERT INTO payments (paymentId, orderId, amount, status) VALUES (?, ?, ?, ?)",
+    [paymentId, orderId, amount, 'completed'],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json({ 
+        success: true,
+        paymentId,
+        orderId,
+        amount,
+        status: 'completed'
+      });
+    }
+  );
+});
